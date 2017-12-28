@@ -588,9 +588,9 @@ public class Knob extends View {
                     int x = (int) motionEvent.getX();
                     int y = (int) motionEvent.getY();
                     if (action == MotionEvent.ACTION_DOWN) {
-                        double oldAngle = getAngleOfActualState();
+                        double oldAngle = getAngleOfCurrentState();
                         double newAngle = Math.atan2((double)(y-centerY), (double)(x-centerX));
-                        angleDelta = newAngle - oldAngle;
+                        angleDelta = normalizeAngle(newAngle - oldAngle);
                         swipeing = false;
                         disallowParentToHandleTouchEvents(); // needed when Knob's parent is a ScrollView
                     }
@@ -731,7 +731,7 @@ public class Knob extends View {
         takeEffect(animate);
     }
 
-    private double getAngleOfActualState() {
+    private double getAngleOfCurrentState() {
         double min = Math.toRadians((double)minAngle);
         double max = Math.toRadians((double)maxAngle - 0.0001);
         double range = max - min;
@@ -740,7 +740,7 @@ public class Knob extends View {
             singleStepAngle = range / numberOfStates;
         min = (float)normalizeAngle(min);
         while (min > max) max += 2*PI;      // both min and max are positive and in the correct order.
-        return currentState * singleStepAngle + min;
+        return (currentState * singleStepAngle + min) - PI/2;
     }
 
     private void takeEffect(boolean animate) {
