@@ -316,6 +316,7 @@ public class Knob extends View {
     private int swipeSensibilityPixels = 100;
     private int swipeX=0, swipeY=0;  // used for swipe management
     boolean swipeing = false;        // used for swipe / click management
+    double angleDelta = 0;
     private boolean freeRotation = true;
     private float minAngle = 0f;
     private float maxAngle = 360f;
@@ -587,13 +588,16 @@ public class Knob extends View {
                     int x = (int) motionEvent.getX();
                     int y = (int) motionEvent.getY();
                     if (action == MotionEvent.ACTION_DOWN) {
+                        double oldAngle = getAngleOfActualState();
+                        double newAngle = Math.atan2((double)(y-centerY), (double)(x-centerX));
+                        angleDelta = newAngle - oldAngle;
                         swipeing = false;
                         disallowParentToHandleTouchEvents(); // needed when Knob's parent is a ScrollView
                     }
                     else if (action == MotionEvent.ACTION_MOVE) {
                         double angle = Math.atan2((double)(y-centerY), (double)(x-centerX));
                         swipeing = true;
-                        setValueByAngle(angle, animation);
+                        setValueByAngle(angle - angleDelta, animation);
                         return true;
                     }
                     else if (action == MotionEvent.ACTION_UP) {
@@ -725,6 +729,18 @@ public class Knob extends View {
         calcActualState();
         if(listener != null) listener.onState(actualState);
         takeEffect(animate);
+    }
+
+    private double getAngleOfActualState() {
+        double min = Math.toRadians((double)minAngle);
+        double max = Math.toRadians((double)maxAngle - 0.0001);
+        double range = max - min;
+        double singleStepAngle = range / (numberOfStates);
+        if (PI*2 - range < singleStepAngle)
+            singleStepAngle = range / numberOfStates;
+        min = (float)normalizeAngle(min);
+        while (min > max) max += 2*PI;      // both min and max are positive and in the correct order.
+        return currentState * singleStepAngle + min;
     }
 
     private void takeEffect(boolean animate) {
